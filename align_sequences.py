@@ -44,12 +44,63 @@ def read_single_contig_fasta(filename):
 
 def smith_waterman(seq1, seq2, match, mismatch, gapopen, gapextend):
     max_score = 0
+    max_score_index = (0,0)
     alnseq1 = ""
     alnseq2 = ""
 
+    scoring_matrix = [[None for _ in range(len(seq2)+1)] for _ in range(len(seq1)+1)]
 
-    return max_score, alnseq1, alnseq2
+    path_matrix = [[None for _ in range(len(seq2))] for _ in range(len(seq1))]
+    for i in range(1, len(seq1)+1):
+        scoring_matrix[i][0]=0
+    for j in range(0, len(seq2)+1):
+        scoring_matrix[0][j]=0
+    for i in range(1, len(seq1)+1):
+        for j in range(1, len(seq2)+1):
+            # left
+            scoring_matrix[i][j] = max((scoring_matrix[i][j-1] - gapopen), 0)
+            path_matrix[i-1][j-1] = 0
+            # diagonal
+            is_match = seq1[i-1] == seq2[j-1]
+            value = scoring_matrix[i-1][j-1] + is_match*match - (not is_match)*mismatch
+            if value > scoring_matrix[i][j]:
+                scoring_matrix[i][j]=value
+                path_matrix[i-1][j-1]=1
+            # up
+            value = scoring_matrix[i-1][j] - gapopen
+            if value > scoring_matrix[i][j]:
+                scoring_matrix[i][j]=value
+                path_matrix[i-1][j-1]=2
+            if max_score < scoring_matrix[i][j]:
+                max_score = scoring_matrix[i][j]
+                max_score_index = (i,j)
+    # print(scoring_matrix)
+    # print(max_score)
+    # print(max_score_index)
+    alnseq1, alnseq2 = traceback(scoring_matrix, path_matrix, seq1, seq2, max_score_index[0], max_score_index[1])
     
+    return max_score, alnseq1, alnseq2
+
+def traceback(score_matrix, path_matrix, seq1, seq2, i, j):
+    if score_matrix[i][j] == 0:
+        return ("", "")
+    direction = path_matrix[i-1][j-1]
+    # left
+    if direction == 0:
+        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i, j-1)
+        return(a+"-", b+seq2[j-1])
+    # diagonal
+    elif direction == 1:
+        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-1, j-1)
+        return(a+seq1[i-1], b+seq2[j-1])
+    # up
+    else:
+        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-1, j)
+        return (a+seq1[i-1], b+"-")
+
+
+
+# smith_waterman("GGTTGACTA", "TGTTACGG", 3, 3, 2, 2)
 
 def main(filename1, filename2, match, mismatch, gapopen, gapextend):
     # read the name and sequence from the file
