@@ -57,58 +57,84 @@ def smith_waterman(seq1, seq2, match, mismatch, gapopen, gapextend):
         scoring_matrix[0][j]=0
     for i in range(1, len(seq1)+1):
         for j in range(1, len(seq2)+1):
-            # left
+            #left
             if j>1:
-                scoring_matrix[i][j] = max((scoring_matrix[i][j-1] - (gapextend if path_matrix[i-1][j-2] == 0 else gapopen)), 0)
+                max_left_score = max(scoring_matrix[i][1] - gapopen - max(j-2, 0)*gapextend, 0)
+                left_index = 1
+                for index in range(2,j):
+                    left_score = scoring_matrix[i][index] - gapopen - max(j-index-1,0)*gapextend
+                    if left_score >= max_left_score:
+                        max_left_score = left_score
+                        left_index = index
             else:
-                scoring_matrix[i][j] = max((scoring_matrix[i][j-1] - gapopen), 0)
-            path_matrix[i-1][j-1] = 0
-            # diagonal
+                max_left_score = -1
             is_match = seq1[i-1] == seq2[j-1]
-            value = scoring_matrix[i-1][j-1] + is_match*match - (not is_match)*mismatch
-            if value > scoring_matrix[i][j]:
-                scoring_matrix[i][j]=value
-                path_matrix[i-1][j-1]=1
-            # up
+            #diagonal
+            diagonal_score = scoring_matrix[i-1][j-1] + is_match*match - (not is_match)*mismatch
+            #up
             if i>1:
-                value = scoring_matrix[i-1][j] - (gapextend if path_matrix[i-2][j-1] == 2 else gapopen)
+                max_up_score = max(scoring_matrix[1][j] - gapopen - max(i-2, 0)*gapextend, 0)
+                up_index = 1
+                for index in range(2,i):
+                    up_score = scoring_matrix[index][j] - gapopen - max(i-index-1, 0)*gapextend
+                    if up_score >= max_up_score:
+                        max_up_score = up_score
+                        up_index = index
             else:
-                value = scoring_matrix[i-1][j] - gapopen
-            if value > scoring_matrix[i][j]:
-                scoring_matrix[i][j]=value
-                path_matrix[i-1][j-1]=2
-            if max_score < scoring_matrix[i][j]:
-                max_score = scoring_matrix[i][j]
+                max_up_score = -1
+            
+            local_max_score = max(max_left_score, diagonal_score, max_up_score, 0)
+            scoring_matrix[i][j] = local_max_score
+            possible_paths = [0,0,0]
+            if max_left_score == local_max_score:
+                possible_paths[0] = left_index
+            if diagonal_score == local_max_score:
+                possible_paths[1] = 1
+            if max_up_score == local_max_score:
+                possible_paths[2] = up_index
+
+            path_matrix[i-1][j-1] = possible_paths
+
+            if max_score < local_max_score:
+                max_score = local_max_score
                 max_score_index = (i,j)
-    print(scoring_matrix)
-    print(path_matrix)
-    # print(max_score)
-    # print(max_score_index)
+            
+    # print(scoring_matrix)
+    # print(path_matrix)
     alnseq1, alnseq2 = traceback(scoring_matrix, path_matrix, seq1, seq2, max_score_index[0], max_score_index[1])
-    
     return max_score, alnseq1, alnseq2
 
 def traceback(score_matrix, path_matrix, seq1, seq2, i, j):
     if score_matrix[i][j] == 0:
         return ("", "")
-    direction = path_matrix[i-1][j-1]
-    # left
-    if direction == 0:
-        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i, j-1)
-        return(a+"-", b+seq2[j-1])
-    # diagonal
-    elif direction == 1:
+    directions = path_matrix[i-1][j-1]
+    # prioritize diagonal
+    if directions[1] == 1:
+        print("hi")
         a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-1, j-1)
         return(a+seq1[i-1], b+seq2[j-1])
-    # up
+    #up = insertion, left deletion
+    if directions[0] >= directions [2]:
+        #left
+        temp_seq_1 = "-"*directions[0]
+        temp_seq_2 = seq2[j-1-directions[0] : j-1]
+        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i, j-directions[0])
+        return(a+temp_seq_1, b+temp_seq_2)
     else:
-        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-1, j)
-        return (a+seq1[i-1], b+"-")
+        temp_seq_1 = seq1[i-1-directions[2] : i-1]
+        temp_seq_2 = "-"*directions[2]
+        a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-directions[2], j)
+        return(a+temp_seq_1, b+temp_seq_2)
+
+
 
 seq1 = "ACGTTA"
 seq2 = "ACTA"
 print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
-    # print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
+
+seq1 = "GGTTGACTA"
+seq2 = "TGTTACGG"
+print(smith_waterman(seq1, seq2, 3 ,3, 2, 2))
 
 
 # smith_waterman("GGTTGACTA", "TGTTACGG", 3, 3, 2, 2)
