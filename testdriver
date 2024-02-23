@@ -33,12 +33,14 @@ class TestAlignmentMethods(unittest.TestCase):
     def test_smith_waterman_gap1_affine(self):
         seq1 = "ACGTTA"
         seq2 = "ACTA"
+        print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
         self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(2.0, 'ACGTTA','AC--TA'))
 
     # A test case with one gap in seq1 using a affine gap penalty
     def test_smith_waterman_gap2_affine(self):
         seq1 = "ACTA"
         seq2 = "ACGTTA"
+        print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
         self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(2.0, 'AC--TA','ACGTTA'))
 
     # A test case with local alignment (alignment does not extend all the way)
