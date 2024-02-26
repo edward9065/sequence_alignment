@@ -9,39 +9,37 @@ class TestAlignmentMethods(unittest.TestCase):
     def test_smith_waterman_self(self):
         seq1 = "ACGTTA"
         seq2 = "ACGTTA"
-        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0),(6, 'ACGTTA','ACGTTA'))
+        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(6, 'ACGTTA','ACGTTA'))
 
     # A test case with just one mismatch
     def test_smith_waterman_mismatch(self):
         seq1 = "ACGTTA"
         seq2 = "ACCTTA"
-        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0),(4, 'ACGTTA','ACCTTA'))
+        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(4.0, 'ACGTTA','ACCTTA'))
 
     # A test case with one gap in seq2 using a linear gap penalty
     def test_smith_waterman_gap1(self):
         seq1 = "ACGTTA"
         seq2 = "ACTTA"
-        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0),(4, 'ACGTTA','AC-TTA'))
+        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(3.5, 'ACGTTA','AC-TTA'))
 
     # A test case with one gap in seq1 using a linear penalty
     def test_smith_waterman_gap2(self):
         seq1 = "ACTTA"
         seq2 = "ACGTTA"
-        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0),(4, 'AC-TTA','ACGTTA'))
+        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(3.5, 'AC-TTA','ACGTTA'))
 
     # A test case with one gap in seq2 using a affine gap penalty
     def test_smith_waterman_gap1_affine(self):
         seq1 = "ACGTTA"
         seq2 = "ACTA"
-        print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
-        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(2.0, 'ACGTTA','AC--TA'))
+        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(2.0, 'AC','AC'))
 
     # A test case with one gap in seq1 using a affine gap penalty
     def test_smith_waterman_gap2_affine(self):
         seq1 = "ACTA"
         seq2 = "ACGTTA"
-        print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
-        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(2.0, 'AC--TA','ACGTTA'))
+        self.assertEqual(smith_waterman(seq1, seq2, 1, 1, 1, 0.5),(2.0, 'AC','AC'))
 
     # A test case with local alignment (alignment does not extend all the way)
     def test_smith_waterman_local(self):

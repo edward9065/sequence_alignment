@@ -59,13 +59,13 @@ def smith_waterman(seq1, seq2, match, mismatch, gapopen, gapextend):
         for j in range(1, len(seq2)+1):
             #left
             if j>1:
-                max_left_score = max(scoring_matrix[i][1] - gapopen - max(j-2, 0)*gapextend, 0)
-                left_index = 1
+                max_left_score = max(scoring_matrix[i][1] - gapopen - (j-1)*gapextend, 0)
+                left_steps = j - 1
                 for index in range(2,j):
-                    left_score = scoring_matrix[i][index] - gapopen - max(j-index-1,0)*gapextend
+                    left_score = scoring_matrix[i][index] - gapopen - (j-index)*gapextend
                     if left_score >= max_left_score:
                         max_left_score = left_score
-                        left_index = index
+                        left_steps = j - index
             else:
                 max_left_score = -1
             is_match = seq1[i-1] == seq2[j-1]
@@ -73,13 +73,13 @@ def smith_waterman(seq1, seq2, match, mismatch, gapopen, gapextend):
             diagonal_score = scoring_matrix[i-1][j-1] + is_match*match - (not is_match)*mismatch
             #up
             if i>1:
-                max_up_score = max(scoring_matrix[1][j] - gapopen - max(i-2, 0)*gapextend, 0)
-                up_index = 1
+                max_up_score = max(scoring_matrix[1][j] - gapopen - max(i, 0)*gapextend, 0)
+                up_steps = i - 1
                 for index in range(2,i):
-                    up_score = scoring_matrix[index][j] - gapopen - max(i-index-1, 0)*gapextend
+                    up_score = scoring_matrix[index][j] - gapopen - max(i-index, 0)*gapextend
                     if up_score >= max_up_score:
                         max_up_score = up_score
-                        up_index = index
+                        up_steps = i - index
             else:
                 max_up_score = -1
             
@@ -87,11 +87,11 @@ def smith_waterman(seq1, seq2, match, mismatch, gapopen, gapextend):
             scoring_matrix[i][j] = local_max_score
             possible_paths = [0,0,0]
             if max_left_score == local_max_score:
-                possible_paths[0] = left_index
+                possible_paths[0] = left_steps
             if diagonal_score == local_max_score:
                 possible_paths[1] = 1
             if max_up_score == local_max_score:
-                possible_paths[2] = up_index
+                possible_paths[2] = up_steps
 
             path_matrix[i-1][j-1] = possible_paths
 
@@ -110,83 +110,82 @@ def traceback(score_matrix, path_matrix, seq1, seq2, i, j):
     directions = path_matrix[i-1][j-1]
     # prioritize diagonal
     if directions[1] == 1:
-        print("hi")
         a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-1, j-1)
         return(a+seq1[i-1], b+seq2[j-1])
     #up = insertion, left deletion
     if directions[0] >= directions [2]:
         #left
         temp_seq_1 = "-"*directions[0]
-        temp_seq_2 = seq2[j-1-directions[0] : j-1]
+        temp_seq_2 = seq2[j-directions[0] : j]
         a,b = traceback(score_matrix, path_matrix, seq1, seq2, i, j-directions[0])
         return(a+temp_seq_1, b+temp_seq_2)
     else:
-        temp_seq_1 = seq1[i-1-directions[2] : i-1]
+        temp_seq_1 = seq1[i-directions[2] : i]
         temp_seq_2 = "-"*directions[2]
         a,b = traceback(score_matrix, path_matrix, seq1, seq2, i-directions[2], j)
         return(a+temp_seq_1, b+temp_seq_2)
 
 
 
-seq1 = "ACGTTA"
-seq2 = "ACTA"
-print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
+# seq1 = "ACGTTA"
+# seq2 = "ACTTA"
+# print(smith_waterman(seq1, seq2, 1, 1, 1, 0.5))
 
-seq1 = "GGTTGACTA"
-seq2 = "TGTTACGG"
-print(smith_waterman(seq1, seq2, 3 ,3, 2, 2))
+# seq1 = "GGTTGACTA"
+# seq2 = "TGTTACGG"
+# print(smith_waterman(seq1, seq2, 3 ,3, 2, 2))
 
 
 # smith_waterman("GGTTGACTA", "TGTTACGG", 3, 3, 2, 2)
 
-# def main(filename1, filename2, match, mismatch, gapopen, gapextend):
-#     # read the name and sequence from the file
-#     name1, seq1 = read_single_contig_fasta(filename1)
-#     name2, seq2 = read_single_contig_fasta(filename2)
+def main(filename1, filename2, match, mismatch, gapopen, gapextend):
+    # read the name and sequence from the file
+    name1, seq1 = read_single_contig_fasta(filename1)
+    name2, seq2 = read_single_contig_fasta(filename2)
 
-#     # this function takes as input two nucleotide sequences along with
-#     # scores for an alignment match, mismatch, opening a new gap, and 
-#     # extending an existing gap. This should return the maximum alignment
-#     # score as well as the alignment. For examples see the testdriver script
-#     max_score, alnseq1, alnseq2 = smith_waterman(seq1, seq2, 
-#                                   match, mismatch, gapopen, gapextend)
+    # this function takes as input two nucleotide sequences along with
+    # scores for an alignment match, mismatch, opening a new gap, and 
+    # extending an existing gap. This should return the maximum alignment
+    # score as well as the alignment. For examples see the testdriver script
+    max_score, alnseq1, alnseq2 = smith_waterman(seq1, seq2, 
+                                  match, mismatch, gapopen, gapextend)
     
-#     print("Maximum alignment score: {}".format(max_score))
-#     print("Sequence1 : {}".format(alnseq1))
-#     print("Sequence2 : {}".format(alnseq2))
+    print("Maximum alignment score: {}".format(max_score))
+    print("Sequence1 : {}".format(alnseq1))
+    print("Sequence2 : {}".format(alnseq2))
 
-# if __name__ == "__main__":
-#     try:
-#         opts, args = getopt(argv[1:],
-#                      "hm:x:g:e:",
-#                      ["help", "match=", "mismatch=", "gapopen=", "gapextend="])
-#     except GetoptError as err:
-#         print(err)
-#         print(__doc__, file=stderr)
-#         exit(1) 
+if __name__ == "__main__":
+    try:
+        opts, args = getopt(argv[1:],
+                     "hm:x:g:e:",
+                     ["help", "match=", "mismatch=", "gapopen=", "gapextend="])
+    except GetoptError as err:
+        print(err)
+        print(__doc__, file=stderr)
+        exit(1) 
 
-#     match = 2
-#     mismatch = 1
-#     gapopen = 4
-#     gapextend = 1
+    match = 2
+    mismatch = 1
+    gapopen = 4
+    gapextend = 1
 
-#     for o, a in opts:
-#         if o in ("-h", "--help"):
-#             print(__doc__, file=stderr)
-#             exit()
-#         elif o in ("-m", "--match"):
-#             match = float(a)
-#         elif o in ("-x", "--mismatch"):
-#             mismatch = float(a)
-#         elif o in ("-g", "--gapopen"):
-#             gapopen = float(a)
-#         elif o in ("-e", "--gapextend"):
-#             gapextend = float(a)
-#         else:
-#             assert False, "unhandled option"
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            print(__doc__, file=stderr)
+            exit()
+        elif o in ("-m", "--match"):
+            match = float(a)
+        elif o in ("-x", "--mismatch"):
+            mismatch = float(a)
+        elif o in ("-g", "--gapopen"):
+            gapopen = float(a)
+        elif o in ("-e", "--gapextend"):
+            gapextend = float(a)
+        else:
+            assert False, "unhandled option"
 
-#     if len(args) != 2:
-#         print(__doc__, file=stderr)
-#         exit(2)
+    if len(args) != 2:
+        print(__doc__, file=stderr)
+        exit(2)
 
-#     main(args[0], args[1], match, mismatch, gapopen, gapextend)
+    main(args[0], args[1], match, mismatch, gapopen, gapextend)
